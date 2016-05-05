@@ -69,7 +69,7 @@ void ring(void) {
         tx_str(PSTR("RING Ringing\r\n"));
         PORTB |= 0x20;
         PORTC |= 0x04;
-        for (uint16_t i=0; i<RING_DURATION_SEC*100 && !handle_open_button(); i++)
+        for (uint16_t i=0; i<RING_DURATION_SEC*100 && !handle_open_button() && (PINC&1); i++)
             _delay_ms(10);
         PORTB &= ~0x20;
         PORTC &= ~0x04;
