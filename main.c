@@ -10,11 +10,13 @@
 #define MIN_PULSE_WIDTH_MS 50
 #define RING_DURATION_SEC 20
 #define OPEN_DURATION_SEC 3
+#define THURSDAY_TIMEOUT_MIN 90UL
 
-#define  PRESSED_MIN_MS 250
-#define RELEASED_MIN_MS 250
+#define  PRESSED_MIN_MS 250UL
+#define RELEASED_MIN_MS 250UL
 
-uint8_t global_thursday_mode = 0;
+static uint8_t global_thursday_mode = 0;
+static uint16_t global_thursday_timectr_sec = 0;
 
 void tx_str(const char * PROGMEM s) {
     uint8_t c;
@@ -64,6 +66,7 @@ uint8_t handle_open_button(void) {
 void ring(void) {
     if (global_thursday_mode) {
         tx_str(PSTR("THUA Thursday mode auto open\r\n"));
+        global_thursday_timectr_sec = 0;
         open();
     } else {
         tx_str(PSTR("RING Ringing\r\n"));
@@ -83,6 +86,7 @@ void code(void) {
 
 void set_thursday_mode(uint8_t mode) {
     global_thursday_mode = mode;
+    global_thursday_timectr_sec = 0;
 
     tx_str(mode ? PSTR("THU1 Thursday mode set to on\r\n") : PSTR("THU0 Thursday mode set to off\r\n"));
 
@@ -164,6 +168,12 @@ int main(void) {
             codefail = 0;
             thursday_toggle_timeout = 0;
             TCNT1 = 0;
+
+            global_thursday_timectr_sec += TIMEOUT_SEC;
+            if (global_thursday_timectr_sec >= THURSDAY_TIMEOUT_MIN*60) {
+                tx_str(PSTR("TOUT Thursday mode timeout\r\n"));
+                set_thursday_mode(0);
+            }
         } else {
             uint8_t st = PINC&1;
             if (st == (pidx&1)) {
