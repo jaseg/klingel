@@ -5,12 +5,12 @@
 #include <avr/interrupt.h>
 #include <string.h>
 
-#define HZ 3906UL
-#define TIMEOUT_SEC 5
+#define HZ 15625UL
+#define TIMEOUT_SEC 4
 #define MIN_PULSE_WIDTH_MS 50
 #define RING_DURATION_SEC 20
 #define OPEN_DURATION_SEC 3
-#define THURSDAY_TIMEOUT_MIN 90UL
+#define THURSDAY_TIMEOUT_MIN 300UL
 
 #define  PRESSED_MIN_MS 250UL
 #define RELEASED_MIN_MS 250UL
@@ -64,19 +64,13 @@ uint8_t handle_open_button(void) {
 }
 
 void ring(void) {
-    if (global_thursday_mode) {
-        tx_str(PSTR("THUA Thursday mode auto open\r\n"));
-        global_thursday_timectr_sec = 0;
-        open();
-    } else {
-        tx_str(PSTR("RING Ringing\r\n"));
-        PORTB |= 0x20;
-        PORTC |= 0x04;
-        for (uint16_t i=0; i<RING_DURATION_SEC*100 && !handle_open_button() && (PINC&1); i++)
-            _delay_ms(10);
-        PORTB &= ~0x20;
-        PORTC &= ~0x04;
-    }
+    tx_str(PSTR("RING Ringing\r\n"));
+    PORTB |= 0x20;
+    PORTC |= 0x04;
+    for (uint16_t i=0; i<RING_DURATION_SEC*100 && !handle_open_button() && (PINC&1); i++)
+        _delay_ms(10);
+    PORTB &= ~0x20;
+    PORTC &= ~0x04;
 }
 
 void code(void) {
@@ -170,13 +164,16 @@ int main(void) {
             TCNT1 = 0;
 
             global_thursday_timectr_sec += TIMEOUT_SEC;
-            if (global_thursday_timectr_sec >= THURSDAY_TIMEOUT_MIN*60) {
+            if (global_thursday_timectr_sec >= THURSDAY_TIMEOUT_MIN*60UL) {
                 tx_str(PSTR("TOUT Thursday mode timeout\r\n"));
                 set_thursday_mode(0);
             }
         } else {
             uint8_t st = PINC&1;
-            if (st == (pidx&1)) {
+            if (global_thursday_mode && !st) {
+                tx_str(PSTR("THUA Thursday mode auto open\r\n"));
+                open();
+            } else if (st == (pidx&1)) {
                 uint16_t val = TCNT1;
                 if (val > HZ/1000*MIN_PULSE_WIDTH_MS) {
                     pattern[pidx++] = val;
