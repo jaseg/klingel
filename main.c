@@ -5,15 +5,15 @@
 #include <avr/interrupt.h>
 #include <string.h>
 
-#define HZ 15625UL
+#define HZ 15625ULL
 #define TIMEOUT_SEC 4
-#define MIN_PULSE_WIDTH_MS 50
+#define MIN_PULSE_WIDTH_MS 10
 #define RING_DURATION_SEC 20
 #define OPEN_DURATION_SEC 3
 #define THURSDAY_TIMEOUT_MIN 300UL
 
-#define  PRESSED_MIN_MS 250UL
-#define RELEASED_MIN_MS 250UL
+#define  PRESSED_MIN_MS 50UL
+#define RELEASED_MIN_MS 50UL
 
 static uint8_t global_thursday_mode = 0;
 static uint16_t global_thursday_timectr_sec = 0;
@@ -175,7 +175,7 @@ int main(void) {
                 open();
             } else if (st == (pidx&1)) {
                 uint16_t val = TCNT1;
-                if (val > HZ/1000*MIN_PULSE_WIDTH_MS) {
+                if (val > HZ*MIN_PULSE_WIDTH_MS/1000ULL) {
                     pattern[pidx++] = val;
                     TCNT1 = 0;
                     if (pidx == sizeof(pattern)/sizeof(pattern[0])-1) {
