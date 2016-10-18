@@ -6,7 +6,7 @@
 F_CPU = 16000000
 DEVICE = atmega168
 
-CFLAGS = -g2 -mmcu=$(DEVICE) -DF_CPU=$(F_CPU) 
+CFLAGS = -g2 -mmcu=$(DEVICE) -DF_CPU=$(F_CPU) -std=c99
 CFLAGS+= -Os -ffunction-sections -fdata-sections -fpack-struct -fno-move-loop-invariants -fno-tree-scev-cprop -fno-inline-small-functions  
 CFLAGS+= -Wall -Wno-pointer-to-int-cast
 #CFLAGS+= -Wa,-ahls=$<.lst
