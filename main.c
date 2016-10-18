@@ -11,6 +11,7 @@
 #define RING_DURATION_SEC 20
 #define OPEN_DURATION_SEC 3
 #define THURSDAY_TIMEOUT_MIN 300UL
+#define THURSDAY_OPEN_DELAY 750UL
 
 #define  PRESSED_MIN_MS 50UL
 #define RELEASED_MIN_MS 50UL
@@ -172,6 +173,7 @@ int main(void) {
             uint8_t st = PINC&1;
             if (global_thursday_mode && !st) {
                 tx_str(PSTR("THUA Thursday mode auto open\r\n"));
+                _delay_ms(THURSDAY_OPEN_DELAY);
                 open();
             } else if (st == (pidx&1)) {
                 uint16_t val = TCNT1;
