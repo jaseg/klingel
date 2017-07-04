@@ -7,11 +7,11 @@
 
 #define HZ 15625ULL
 #define TIMEOUT_SEC 4
-#define MIN_PULSE_WIDTH_MS 10
-#define RING_DURATION_SEC 20
-#define OPEN_DURATION_SEC 3
-#define THURSDAY_TIMEOUT_MIN 300UL
-#define THURSDAY_OPEN_DELAY 750UL
+#define MIN_PULSE_WIDTH_MS 25 
+#define RING_DURATION_SEC 20 // Time the lamp lights up
+#define OPEN_DURATION_SEC 4 // Door open duration
+#define THURSDAY_TIMEOUT_MIN 420UL // Minutes till Thursday is disabled
+#define THURSDAY_OPEN_DELAY 750UL // Time till the door is opened when the doorbell is pressed
 
 #define  PRESSED_MIN_MS 50UL
 #define RELEASED_MIN_MS 50UL
