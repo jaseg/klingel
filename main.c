@@ -5,16 +5,16 @@
 #include <avr/interrupt.h>
 #include <string.h>
 
-#define HZ 15625ULL
-#define TIMEOUT_SEC 4
-#define MIN_PULSE_WIDTH_MS 25 
-#define RING_DURATION_SEC 20 // Time the lamp lights up
-#define OPEN_DURATION_SEC 4 // Door open duration
+#define HZ 15625ULL // Frequency
+#define TIMEOUT_SEC 4 // time after clicking once till the lamp/bell goes on 
+#define MIN_PULSE_WIDTH_MS 25 // Time the button needs to be pressed till in ms  
+#define RING_DURATION_SEC 20 // Time the lamp lights up in sec
+#define OPEN_DURATION_SEC 4 // Door open duration in sec
 #define THURSDAY_TIMEOUT_MIN 420UL // Minutes till Thursday is disabled
 #define THURSDAY_OPEN_DELAY 750UL // Time till the door is opened when the doorbell is pressed
 
-#define  PRESSED_MIN_MS 50UL
-#define RELEASED_MIN_MS 50UL
+#define  PRESSED_MIN_MS 50UL // Time slots between Code Input
+#define RELEASED_MIN_MS 50UL // Time slots between Code Input
 
 static uint8_t global_thursday_mode = 0;
 static uint16_t global_thursday_timectr_sec = 0;
@@ -56,7 +56,7 @@ void open(void) {
     PORTC &= ~0x02; /* Opener relay */
 }
 
-uint8_t handle_open_button(void) {
+uint8_t handle_open_button(void) { // Open when the Open-Button is pressed
     if (PINC&0x20)
         return 0;
     tx_str(PSTR("OPEN Manual open\r\n"));
@@ -64,7 +64,7 @@ uint8_t handle_open_button(void) {
     return 1;
 }
 
-void ring(void) {
+void ring(void) { // RING RING RING RING!!!
     tx_str(PSTR("RING Ringing\r\n"));
     PORTB |= 0x20;
     PORTC |= 0x04;
@@ -74,18 +74,18 @@ void ring(void) {
     PORTC &= ~0x04;
 }
 
-void code(void) {
+void code(void) { // Open the door when the button was pressed x times
     tx_str(PSTR("CODE Code access granted\r\n"));
     open();
 }
 
-void set_thursday_mode(uint8_t mode) {
+void set_thursday_mode(uint8_t mode) { // Toggle the thursday mode (/Enable till it is disabled or timeout is reached)
     global_thursday_mode = mode;
     global_thursday_timectr_sec = 0;
 
     tx_str(mode ? PSTR("THU1 Thursday mode set to on\r\n") : PSTR("THU0 Thursday mode set to off\r\n"));
 
-    if (mode)
+    if (mode) // toggle
         PORTC |= 0x10;
     else
         PORTC &= ~0x10;
@@ -123,6 +123,8 @@ int main(void) {
      * A4/PC4 OUT thursday mode signal
      */
     /* use 115200Bd */
+
+	// Initialize
     UBRR0H  = 0;
     UBRR0L  = 16;
     UCSR0A  = (1<<U2X0);
@@ -144,20 +146,21 @@ int main(void) {
     _delay_ms(500);
     tx_help();
     tx_str(PSTR("BOOT Device booted.\r\n"));
+	// Device initilized.
 
-    uint16_t pattern[7];
-    uint8_t pidx = 0;
+    uint16_t pattern[7]; // times the button has to be pressed to open the door (don't change when you don't know what you do)
+    uint8_t pidx = 0; 
     uint8_t thursday_toggle_timeout = 0;
     uint8_t codefail = 0;
-    for (;;) {
+    for (;;) { // Main loop
         handle_open_button();
-        if (!(PINC&0x08) && !thursday_toggle_timeout) { /* Thursday button */
+        if (!(PINC&0x08) && !thursday_toggle_timeout) { /* Is the Thursday button pressed? */
             set_thursday_mode(!global_thursday_mode);
             thursday_toggle_timeout = 1;
             TCNT1 = 0;
         }
-        if (TCNT1 > TIMEOUT_SEC*HZ) { /* Doorbell button timeout */
-            if (pidx != 0 || codefail)
+        if (TCNT1 > TIMEOUT_SEC*HZ) { /* Thursday Button Timeout (Disables Thursday after X hours */
+            if (pidx != 0 || codefail) 
                 ring();
             pidx = 0;
             codefail = 0;
@@ -165,17 +168,17 @@ int main(void) {
             TCNT1 = 0;
 
             global_thursday_timectr_sec += TIMEOUT_SEC;
-            if (global_thursday_timectr_sec >= THURSDAY_TIMEOUT_MIN*60UL) {
+            if (global_thursday_timectr_sec >= THURSDAY_TIMEOUT_MIN*60UL) { // Check if timeout is reached
                 tx_str(PSTR("TOUT Thursday mode timeout\r\n"));
                 set_thursday_mode(0);
             }
-        } else {
+        } else { // When no control button on the front of the door-system is pressed
             uint8_t st = PINC&1;
-            if (global_thursday_mode && !st) {
+            if (global_thursday_mode && !st) { // Open if thursday
                 tx_str(PSTR("THUA Thursday mode auto open\r\n"));
                 _delay_ms(THURSDAY_OPEN_DELAY);
                 open();
-            } else if (st == (pidx&1)) {
+            } else if (st == (pidx&1)) { // Doorcode
                 uint16_t val = TCNT1;
                 if (val > HZ*MIN_PULSE_WIDTH_MS/1000ULL) {
                     pattern[pidx++] = val;
