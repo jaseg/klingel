@@ -7,7 +7,7 @@
 
 #define HZ 15625ULL // Frequency
 #define TIMEOUT_SEC 4 // time after clicking once till the lamp/bell goes on 
-#define MIN_PULSE_WIDTH_MS 25 // Time the button needs to be pressed till in ms  
+#define MIN_PULSE_WIDTH_MS 50 // Time the button needs to be pressed till in ms  
 #define RING_DURATION_SEC 20 // Time the lamp lights up in sec
 #define OPEN_DURATION_SEC 4 // Door open duration in sec
 #define THURSDAY_TIMEOUT_MIN 420UL // Minutes till Thursday is disabled
